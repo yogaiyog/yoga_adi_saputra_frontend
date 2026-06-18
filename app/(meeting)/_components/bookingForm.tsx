@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { startTransition, useMemo, useState } from "react";
-import type { Consumption, MeetingRoom, Unit } from "@/app/_lib/api";
-import { formatCurrency } from "@/app/_lib/format";
+import type { Consumption, MeetingRoom, Unit } from "@/app/_lib/types";
 
 type BookingFormProps = {
   apiBaseUrl: string;
@@ -72,18 +71,6 @@ export default function BookingForm({
   const selectedRoom = useMemo(
     () => meetingRooms.find((room) => room.id === form.roomId) || null,
     [form.roomId, meetingRooms]
-  );
-
-  const selectedConsumptions = useMemo(
-    () =>
-      consumptions.filter((item) => form.consumptionIds.includes(item.id)),
-    [consumptions, form.consumptionIds]
-  );
-
-  const participantQty = Number(form.participantQty || "0");
-  const consumptionFee = selectedConsumptions.reduce(
-    (total, item) => total + item.price * participantQty,
-    0
   );
 
   const endTimeOptions = useMemo(() => {
@@ -298,44 +285,24 @@ export default function BookingForm({
           </div>
 
           <div className="mt-8 border-t border-[var(--soft-line)] pt-8">
-            <div className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
-              <div>
-                <h4 className="mb-5 text-lg font-bold text-[#1c252c]">Jenis Konsumsi</h4>
-                <div className="space-y-4">
-                  {consumptions.map((item) => (
-                    <label
-                      key={item.id}
-                      className="flex items-center gap-3 rounded-2xl border border-transparent px-1 py-1 text-lg text-[#6c7982] transition hover:border-[var(--soft-line)]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form.consumptionIds.includes(item.id)}
-                        onChange={() => toggleConsumption(item.id)}
-                        className="h-6 w-6 rounded-md border border-[var(--line)] text-[var(--brand-500)] focus:ring-[var(--brand-500)]"
-                      />
-                      <span>{item.name}</span>
-                      <span className="ml-auto text-base font-semibold text-[var(--brand-700)]">
-                        {formatCurrency(item.price)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+            <div>
+              <h4 className="mb-5 text-lg font-bold text-[#1c252c]">Jenis Konsumsi</h4>
+              <div className="space-y-4">
+                {consumptions.map((item) => (
+                  <label
+                    key={item.id}
+                    className="flex items-center gap-3 rounded-2xl border border-transparent px-1 py-1 text-lg text-[#6c7982] transition hover:border-[var(--soft-line)]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.consumptionIds.includes(item.id)}
+                      onChange={() => toggleConsumption(item.id)}
+                      className="h-6 w-6 rounded-md border border-[var(--line)] text-[var(--brand-500)] focus:ring-[var(--brand-500)]"
+                    />
+                    <span>{item.name}</span>
+                  </label>
+                ))}
               </div>
-
-              {/* <div className="space-y-3">
-                <span className="text-lg font-bold text-[#1c252c]">Nominal Konsumsi</span>
-                <div className="flex overflow-hidden rounded-2xl border border-[var(--line)] bg-white">
-                  <div className="grid w-18 place-items-center bg-[var(--brand-500)] text-lg font-bold text-white">
-                    Rp
-                  </div>
-                  <div className="flex h-15 flex-1 items-center px-5 text-lg font-semibold text-[#44515a]">
-                    {new Intl.NumberFormat("id-ID").format(consumptionFee)}
-                  </div>
-                </div>
-                <p className="text-sm text-[var(--text-muted)]">
-                  Nominal dihitung otomatis berdasarkan pilihan konsumsi dan jumlah peserta.
-                </p>
-              </div> */}
             </div>
           </div>
         </div>

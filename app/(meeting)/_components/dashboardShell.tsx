@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import type { ReactNode } from "react";
+import LoadingNavLink from "./loadingNavLink";
 
 function HomeIcon() {
   return (
@@ -86,12 +86,13 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
       <div className="px-4 pb-10 pt-[120px] md:px-8 md:pt-[132px]">
         <aside className="fixed bottom-0 left-0 top-[92px] z-30 hidden w-[96px] border-r border-black/5 bg-white/88 px-4 py-8 shadow-[var(--shadow-soft)] backdrop-blur md:flex md:flex-col md:items-center md:gap-5">
-          <Link
+          <LoadingNavLink
             href="/bookings"
             className="grid h-13 w-13 place-items-center rounded-2xl bg-[var(--brand-500)] text-white shadow-[0_12px_22px_rgba(79,144,164,0.26)] transition-transform hover:-translate-y-0.5"
+            loadingLabel=""
           >
             <HomeIcon />
-          </Link>
+          </LoadingNavLink>
           <div className="grid h-13 w-13 place-items-center rounded-2xl text-[var(--brand-500)]">
             <UserIcon />
           </div>
@@ -100,12 +101,13 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         <div className="mx-auto max-w-[1500px] md:pl-[116px]">
           <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Link
+              <LoadingNavLink
                 href="/bookings"
                 className="grid h-14 w-14 place-items-center rounded-2xl bg-[var(--brand-500)] text-white shadow-[0_12px_24px_rgba(79,144,164,0.26)] transition-transform hover:-translate-y-0.5"
+                loadingLabel=""
               >
                 <BackArrowIcon />
-              </Link>
+              </LoadingNavLink>
               <div>
                 <h1 className="font-[family-name:var(--font-manrope)] text-3xl font-extrabold tracking-tight text-[#1a232b]">
                   Ruang Meeting

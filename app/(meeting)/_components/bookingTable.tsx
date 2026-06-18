@@ -1,6 +1,10 @@
-import Link from "next/link";
-import type { Booking } from "@/app/_lib/api";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import type { Booking } from "@/app/_lib/types";
 import { formatCurrency, formatDate, formatTimeRange } from "@/app/_lib/format";
+import LoadingNavLink from "./loadingNavLink";
 
 function PlusIcon() {
   return (
@@ -11,18 +15,83 @@ function PlusIcon() {
   );
 }
 
-export default function BookingTable({ bookings }: { bookings: Booking[] }) {
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  );
+}
+
+type BookingTableProps = {
+  apiBaseUrl: string;
+  bookings: Booking[];
+};
+
+export default function BookingTable({ apiBaseUrl, bookings: initialBookings }: BookingTableProps) {
+  const router = useRouter();
+  const [bookings, setBookings] = useState(initialBookings);
+  const [isRoutingPending, startRoutingTransition] = useTransition();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  async function handleDelete(id: string) {
+    const shouldDelete = window.confirm("Hapus booking ini?");
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setDeletingId(id);
+    setErrorMessage("");
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/bookings/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { message?: string };
+        throw new Error(payload.message || "Gagal menghapus booking.");
+      }
+
+      setBookings((current) => current.filter((booking) => booking.id !== id));
+      startRoutingTransition(() => {
+        router.refresh();
+      });
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Terjadi kesalahan saat menghapus booking."
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-center justify-end gap-3 text-white">
-        <Link
+        <LoadingNavLink
           href="/bookings/new"
           className="inline-flex items-center gap-3 rounded-2xl bg-[var(--brand-500)] px-6 py-4 font-semibold text-white shadow-[0_14px_28px_rgba(79,144,164,0.26)] transition-transform hover:-translate-y-0.5"
+          loadingLabel="Membuka form..."
         >
-          <PlusIcon />
-          Pesan Ruangan
-        </Link>
+          <>
+            <PlusIcon />
+            Pesan Ruangan
+          </>
+        </LoadingNavLink>
       </div>
+
+      {errorMessage ? (
+        <div className="rounded-2xl border border-[var(--danger-100)] bg-[var(--danger-100)] px-5 py-4 text-sm font-semibold text-[var(--danger-600)]">
+          {errorMessage}
+        </div>
+      ) : null}
 
       <div className="overflow-hidden rounded-[30px] border border-white/70 bg-[var(--panel)] shadow-[var(--shadow-card)]">
         <div className="overflow-x-auto">
@@ -36,7 +105,9 @@ export default function BookingTable({ bookings }: { bookings: Booking[] }) {
                   "Tanggal Rapat",
                   "Waktu",
                   "Jumlah Peserta",
-                  "Jenis Konsumsi"
+                  "Jenis Konsumsi",
+                  // "Nominal",
+                  "Delete",
                 ].map((heading) => (
                   <th
                     key={heading}
@@ -50,7 +121,7 @@ export default function BookingTable({ bookings }: { bookings: Booking[] }) {
             <tbody>
               {bookings.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-9 py-16 text-center text-lg text-[var(--text-muted)]">
+                  <td colSpan={9} className="px-9 py-16 text-center text-lg text-[var(--text-muted)]">
                     Belum ada booking meeting room.
                   </td>
                 </tr>
@@ -80,15 +151,31 @@ export default function BookingTable({ bookings }: { bookings: Booking[] }) {
                         ? "-"
                         : booking.consumptions.map((item) => item.consumption.name).join(", ")}
                     </td>
-                    <td className="px-9 py-9 align-top">
-                      {/* <div className="space-y-3">
+                    {/* <td className="px-9 py-9 align-top">
+                      <div className="space-y-3">
                         <p className="text-lg font-semibold text-[#7f8a93]">
                           {formatCurrency(booking.consumptionFee)}
                         </p>
                         <span className="inline-flex rounded-full bg-[var(--success-100)] px-3 py-1 text-sm font-bold tracking-wide text-[var(--success-700)]">
                           {booking.status}
                         </span>
-                      </div> */}
+                      </div>
+                    </td> */}
+                    <td className="px-9 py-9 align-top">
+                      <button
+                        type="button"
+                        disabled={deletingId === booking.id}
+                        onClick={() => void handleDelete(booking.id)}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#f2c6c3] bg-[#fff1f0] text-[#d35750] transition hover:bg-[#ffe3e0] disabled:cursor-not-allowed disabled:opacity-60"
+                        title="Hapus booking"
+                        aria-label={`Hapus booking ${booking.unit.name}`}
+                      >
+                        {deletingId === booking.id ? (
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        ) : (
+                          <TrashIcon />
+                        )}
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -119,7 +206,7 @@ export default function BookingTable({ bookings }: { bookings: Booking[] }) {
               type="button"
               className="rounded-xl border border-[var(--line)] px-5 py-3 font-medium text-[#67757f]"
             >
-              Next
+              {isRoutingPending ? "Refreshing..." : "Next"}
             </button>
           </div>
         </div>
